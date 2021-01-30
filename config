@@ -19,13 +19,16 @@
 # "/usr/lib/pm-utils/power.d".
 # The best-effort method, witll first, it will try a user-defined script
 # at "/etc/powernap/action", or suspend, hibernate, poweroff.
-ACTION_METHOD = 0
+ACTION_METHOD = 1
 
 # Number of seconds that all monitors must have no activity or must be absent.
 # The default is an absence period of 30 seconds.
 # Example:
 #   ABSENT_SECONDS = 30
-ABSENT_SECONDS = 30
+#JJR - 9 minutes; followed by 1 min warning = 10 min sleep timer
+ABSENT_SECONDS = 540
+#JJR - temporarily set to 29 min during setup/config/debug/testing etc. 
+#ABSENT_SECONDS = 1740
 
 # Grace period, after (ABSENT_SECONDS - GRACE_SECONDS) have elapsed with all of
 # the Monitors with absent activity, the system will send a Wall message for an
@@ -34,7 +37,7 @@ ABSENT_SECONDS = 30
 # The default grace period is 6 seconds.
 # Example:
 #   GRACE_SECONDS = 6
-GRACE_SECONDS = 6
+GRACE_SECONDS = 60
 
 # The powernap daemon will wake every INTERVAL_SECONDS and check for activity
 # to all of the monitors.  Lower values of INTERVAL_SECONDS will provide
@@ -45,7 +48,7 @@ GRACE_SECONDS = 6
 # The default interval is 1 second.
 # Example:
 #   INTERVAL_SECONDS = 1
-INTERVAL_SECONDS = 1
+INTERVAL_SECONDS = 20
 
 # The powernap daemon will issue a warning message to the console whenever it
 # has entered into GRACE period. This warning message will warn the user that
@@ -65,7 +68,7 @@ WARN = y
 # The default debug level is 0.
 #    DEBUG = 1
 #    DEBUG = 2
-DEBUG = 0
+DEBUG = 3
 
 # The powernap daemon can watch for changes in the configuration file in
 # /etc/powernap directory without having to restart it.
@@ -133,7 +136,10 @@ wol9 = 9
 #  console = y
 #  console = n
 [ConsoleMonitor]
-ptmx = y
+#ptmx = y
+#JJR - turn console off; there is a bug with python module that handles this,
+#	and it crashes the powernap process while running
+console = n
 
 # The [ProcessMonitor] section lists all the processes to Monitor by using
 # regular expressions.
@@ -145,6 +151,10 @@ ptmx = y
 #  kvm = "kvm "
 [ProcessMonitor]
 #init = "^/sbin/init"
+dpkg = "dpkg"
+aptget = "apt-get"
+#Ensure CD ripping program 'abcde' does not get interrupted during long rips
+abcde = "abcde"
 
 # The [LoadMonitor] section defines the load threshold.  When the system load
 # according to /proc/loadavg is above this value, then system will be deemed
@@ -160,7 +170,7 @@ ptmx = y
 #   threshold = 0
 #   threshold = n
 [LoadMonitor]
-threshold = n
+threshold = 0.5
 
 # The [TCPMonitor] section lists all the TCP ports on which to watch for
 # established connections using netstat(8). It supports both, single TCP
@@ -170,9 +180,16 @@ threshold = n
 #  ssh = 22
 #  http = 80
 #  https = 443
+#  samba = 445
 #  other = 64500-65000
+
 [TCPMonitor]
-#ssh = 22
+ssh = 22
+#daap = 3689 ; this one seems to hang and gives us problems
+#	i.e.  false positive, even when idle; use IO Monitor instead for forked-daapd 
+vnc = 5900
+smb = 445
+
 
 # The [UDPMonitor] section lists all the UDP ports on which to listen
 # for data.
@@ -193,9 +210,13 @@ threshold = n
 # Examples:
 #  kvm-io = "kvm"
 #  mysqld-io = "mysql"
+
 [IOMonitor]
 #kvm-io = "kvm"
 #mysqld-io = "mysql"
+forked-daapd-io = "forked-daapd"
+#x11vnc = "x11vnc" - JJR note: this doesn't seem to be working; use TCP monitor on Port 5900 instead
+timemachine-afpd-io = "afpd"
 
 # The [InputMonitor] section lists the USB Input devices for which to track
 # events. Currently, only two types of devices are supported, mouse and keyboard.
@@ -224,4 +245,3 @@ mouse = y
 #  sdb = n
 [DiskMonitor]
 #sda = y
-
