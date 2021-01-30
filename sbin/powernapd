@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/python
 #
 #    powernapd - monitor a system process table; if IDLE amount of time
 #               goes by with no MONITORED_PROCESSES running, run ACTION
@@ -85,10 +85,18 @@ def establish_lock():
 
 # Clean up lock file on termination signals
 def signal_handler(signal, frame):
+    #JJR - adding more debugging statements
+    debug(logging.DEBUG, "Received signal: %i" % signal)
     if os.path.exists(LOCK):
         os.remove(LOCK)
+	debug(logging.DEBUG, "Removing lock: %s" % LOCK)
     debug(logging.INFO, "Stopping %s" % powernap.PKG)
-    sys.exit(1)
+    #JJR - sys.exit will raise SystemExit exception. Normally python will then proceed to exit (libc exit
+    # unless there is another thread running. If so, then it won't truly exit. Better to force an
+    # exit here by calling the libc exit. Otherwise, systemd will just hang and eventually timeout
+    # and force a kill -KILL anyway. 
+    #sys.exit(1)
+    os._exit(1)
 
 # Handler warns users when an USB Input device has been connected or
 # disconnected. This is only useful for [InputMonitor] to avoid errors.
@@ -158,6 +166,7 @@ def take_recover_action():
 
 # Handler for asynchronous external signals
 def take_recover_action_handler(signal, frame):
+    debug(logging.DEBUG, "take_recover_action_handler reached: Received signal: %i" % signal)
     if powernap.ACTION_METHOD == 0:
         take_recover_action()
 

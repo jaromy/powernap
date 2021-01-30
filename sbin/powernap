@@ -34,9 +34,11 @@ best_effort() {
 	if [ -x "/etc/$PKG/action" ]; then
 		exec /etc/$PKG/action
 	elif pm-is-supported --suspend; then
-		exec /usr/sbin/pm-suspend
+		#exec /usr/sbin/pm-suspend - jjr use systemctl instead on Ubuntu 18.04
+		exec systemctl suspend
 	elif pm-is-supported --hibernate; then
-		exec /usr/sbin/pm-hibernate
+		#exec /usr/sbin/pm-hibernate 
+		exec systemctl hibernate
 	else
 		exec /sbin/poweroff
 	fi
@@ -47,16 +49,20 @@ echo "$ACTION_METHOD" > /var/run/powernap.state
 
 case $ACTION_METHOD in
 	0)
+		# JJR - TODO: what is the systemd equivalent of this??
 		exec /usr/sbin/pm-powersave true
 		exit ;;
-	1)
-		exec /usr/sbin/pm-suspend
+	1)	# JJR - use systemd instead for Ubuntu 18.04
+		#exec /usr/sbin/pm-suspend
+		exec systemctl suspend
 		exit ;;
-	2)
-		exec /usr/sbin/pm-hibernate
+	2)	# JJR - use systemd instead for Ubuntu 18.04
+		#exec /usr/sbin/pm-hibernate
+		exec systemctl hibernate
 		exit ;;
-	3)
-		exec /sbin/poweroff
+	3)	# JJR - use systemd instead for Ubuntu 18.04
+		#exec /sbin/poweroff
+		exec systemctl poweroff
 		exit ;;
 	4)
 		best_effort
